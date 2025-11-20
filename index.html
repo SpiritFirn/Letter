@@ -265,12 +265,13 @@
         #scene4 .card p {
           max-width: 100% !important;
         }
-        
+
+        /* ---- ТУК СА ТОЧНИТЕ РЕДОВЕ ---- */
         #scene4 {
-          align-items: flex-start !important;
+          position: relative !important; /* FIX */
+          overflow: visible !important; /* FIX */
+          align-items: center !important; /* FIX */
           padding-top: 70px !important;
-          position: relative;
-          overflow: hidden;
         }
 
         #scene4::before {
@@ -278,8 +279,8 @@
           background-position: center center !important;
           background-repeat: no-repeat !important;
 
-          height: 120% !important; 
-          top: -10vh !important;
+          height: auto !important; /* FIX */
+          top: 0 !important; /* FIX */
         }
 
         #scene4 .card {
