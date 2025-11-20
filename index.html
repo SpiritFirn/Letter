@@ -246,6 +246,25 @@
         input[type="text"] {
           width: 220px;
         }
+        .gifts {
+          grid-template-columns: 1fr !important;
+          gap: 14px;
+          padding: 0 6px;
+        }
+
+        .gift-card {
+          max-width: 100% !important;
+          text-align: center;
+          padding: 18px;
+        }
+
+        .gift-card h2 {
+          font-size: 22px;
+        }
+
+        #scene4 .card p {
+          max-width: 100% !important;
+        }
       }
 
       /* Снежинки */
@@ -407,10 +426,9 @@
           </div>
         </div>
         <div style="margin-top: 20px">
-        <button class="btn" data-goto="5">Продължи</button>
+          <button class="btn" data-goto="5">Продължи</button>
+        </div>
       </div>
-      </div>
-      
     </section>
 
     <!-- SCENE 5 -->
@@ -425,7 +443,17 @@
     <section id="scene6" class="scene" aria-hidden="true">
       <div class="card" role="main" aria-labelledby="s6title">
         <h1 id="s6title">Старт след:</h1>
-        <p id="countdown" style="font-size: 48px; margin-top: 20px; margin:auto; text-align: center;">3</p>
+        <p
+          id="countdown"
+          style="
+            font-size: 48px;
+            margin-top: 20px;
+            margin: auto;
+            text-align: center;
+          "
+        >
+          3
+        </p>
       </div>
     </section>
 
@@ -462,7 +490,14 @@
       }
 
       /* ---------- scene stack logic ---------- */
-      const scenes = ["scene1", "scene2", "scene3", "scene4", "scene5", "scene6"];
+      const scenes = [
+        "scene1",
+        "scene2",
+        "scene3",
+        "scene4",
+        "scene5",
+        "scene6",
+      ];
       let currentIndex = 0;
 
       function showScene(i) {
