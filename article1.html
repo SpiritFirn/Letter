@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="bg">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Фирн — Пазителят на Рила</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;600;700&family=Comfortaa:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --text: #f3f8ff;
+        --muted: #c5d4e4;
+        --btn-bg: #295d86;
+        --btn-bg2: #1e425f;
+        --card-bg: rgba(0, 0, 0, 0.45);
+        --max-width: 920px;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: "Comfortaa", sans-serif;
+        color: var(--text);
+        background: #000;
+      }
+
+      /* Scenes stacked fullscreen */
+      .scene {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.45s cubic-bezier(0.2, 0.9, 0.2, 1);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+      .scene.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* background via CSS variable --bg-url (set by JS) */
+      .scene::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: var(--bg-url);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: 0; /* behind content */
+        transform: translateZ(0); /* GPU */
+      }
+      .scene::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.32),
+          rgba(0, 0, 0, 0.78)
+        );
+        z-index: 1;
+        pointer-events: none;
+        backdrop-filter: blur(2px);
+      }
+
+      /* ensure card content is above pseudo layers */
+      .card {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: var(--max-width);
+        margin: auto;
+        background: var(--card-bg);
+        border-radius: 14px;
+        padding: 36px 34px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        text-align: center;
+      }
+
+      h1 {
+        font-family: "El Messiri", sans-serif;
+        font-size: 36px;
+        margin: 0 0 12px 0;
+        color: var(--text);
+      }
+      p {
+        margin: 8px 0;
+        font-size: 18px;
+        line-height: 1.6;
+        color: var(--text);
+        text-align: justify;
+      }
+
+      .card p {
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: justify;
+      }
+
+      #scene3 .card p {
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: justify;
+      }
+
+      #scene4 .card p {
+        max-width: 650px;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: justify;
+      }
+
+      .btn {
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.08);
+        color: #f2f8ff;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+
+      .btn:active {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      #checkBtn {
+        margin-top: 10px;
+      }
+
+      .btn.ghost {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+
+      /* top controls */
+      .top-controls {
+        position: fixed;
+        right: 16px;
+        top: 12px;
+        display: flex;
+        gap: 8px;
+        z-index: 30;
+      }
+      #musicToggle {
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+      }
+
+      .back-btn {
+        position: fixed;
+        left: 16px;
+        top: 12px;
+        z-index: 30;
+        background: rgba(0, 0, 0, 0.45);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 8px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        display: none;
+      }
+
+      input[type="text"] {
+        padding: 12px 14px;
+        font-size: 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--text);
+        width: 280px;
+        text-align: center;
+        margin-top: 10px;
+      }
+      .hint {
+        margin-top: 14px;
+        color: var(--muted);
+        min-height: 28px;
+      }
+
+      .gifts {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+        justify-items: center;
+        max-width: 850px;
+        margin: auto;
+      }
+
+      .gift-card {
+        width: 100%;
+        max-width: 385px;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        text-align: left;
+      }
+      .gift-card h2 {
+        font-family: "El Messiri";
+        margin: 6px 0 10px 0;
+        color: var(--text);
+      }
+      .footer-note {
+        margin-top: 20px;
+        color: var(--muted);
+        font-size: 15px;
+        text-align: center;
+        padding: auto;
+      }
+
+      @media (max-width: 720px) {
+        .card {
+          padding: 20px;
+          margin: 14px;
+        }
+        h1 {
+          font-size: 28px;
+        }
+        input[type="text"] {
+          width: 220px;
+        }
+      }
+
+      /* Снежинки */
+      .snowflake {
+        position: fixed;
+        top: -10px;
+        color: #fff;
+        font-size: 10px;
+        user-select: none;
+        pointer-events: none;
+        z-index: 1000;
+        opacity: 0.5;
+        animation-name: fall;
+        z-index: 1;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+
+      @keyframes fall {
+        0% {
+          transform: translateY(-50vh) rotate(0deg);
+        }
+        100% {
+          transform: translateY(100vh) rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="musicAsk"
+      style="
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(6px);
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          background: rgba(255, 255, 255, 0.08);
+          padding: 28px 32px;
+          border-radius: 14px;
+          text-align: center;
+          max-width: 320px;
+        "
+      >
+        <p style="font-size: 18px; margin-bottom: 20px">
+          Да пусна ли музиката?<br /><strong>Ще стане вълшебно…</strong>
+        </p>
+        <button id="musicYesBtn" class="btn">Да</button>
+      </div>
+    </div>
+
+    <!-- top controls -->
+    <div class="top-controls" aria-hidden="false">
+      <button id="musicToggle">🔈 Музика</button>
+    </div>
+    <button id="backBtn" class="back-btn" aria-hidden="true">← Назад</button>
+    <audio id="music" src="audio/firn-theme.mp3" loop preload="auto"></audio>
+
+    <!-- SCENE 1 -->
+    <section id="scene1" class="scene" aria-hidden="true">
+      <div class="card" role="main" aria-labelledby="s1title">
+        <h1 id="s1title">Рила те посреща</h1>
+        <p>
+          Рила помни неща, които хората забравят.<br />Имената на ледовете.<br />Пукнатините,
+          по които зимата диша.<br />И мен.
+        </p>
+        <p><strong>Наричат ме Фирн — последният леден дух.</strong></p>
+        <div><button class="btn" data-goto="2">Продължи</button></div>
+      </div>
+    </section>
+
+    <!-- SCENE 2 -->
+    <section id="scene2" class="scene" aria-hidden="true">
+      <div class="card" role="main" aria-labelledby="s2title">
+        <h1 id="s2title">Призоваването</h1>
+        <p>
+          Ледниците вече са рухнали. Следите им — почти заличени.<br />Ала има
+          една, която още ги чува…
+        </p>
+        <p>
+          Името ѝ се промъква между скалите — шепти под камъните като стара,
+          забравена сила:<br /><strong>Вероникааааа...</strong>
+        </p>
+        <p>
+          Не знам коя е тя. Но знам, че усеща неща, които другите не виждат.
+        </p>
+        <div>
+          <button class="btn" data-goto="3">Аз съм Вероникааааа</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 3 -->
+    <section id="scene3" class="scene" aria-hidden="true">
+      <div class="card" role="main" aria-labelledby="s3title">
+        <h1 id="s3title">Шепотът</h1>
+        <p style="white-space: pre-line; font-size: 20px; margin-bottom: 18px">
+          Дай ми глас — и ще живея. Спри дъха си — ще изтлея. Винаги ти
+          отговарям. В тишината - замълчавам. Кой съм аз?
+        </p>
+
+        <div>
+          <input id="answer" type="text" placeholder="Въведи отговора…" />
+          <div><button class="btn" id="checkBtn">Проверка</button></div>
+          <p id="hint" class="hint" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 4 -->
+    <section id="scene4" class="scene" aria-hidden="true">
+      <div class="card" role="main" aria-labelledby="s4title">
+        <h1 id="s4title">Нужности на Фирн</h1>
+        <p>Ехото отвърна. Пътят е открит. Аз — Фирн, моля за помощ.</p>
+
+        <div class="gifts" aria-label="подаръци">
+          <div class="gift-card">
+            <h2>Огнен кристал</h2>
+            <p>
+              Без огън ледът не оцелява — парадокс, който само леден дух
+              познава. Нужен ми е малък източник на топлина: порцеланов или
+              метален чайник, без електричество. Не искаме с вода и ток да стане
+              бум-бум.
+            </p>
+          </div>
+
+          <div class="gift-card">
+            <h2>Снежна сила</h2>
+            <p>
+              За да върна ледниците, трябва сила — не разрушителна, а търпелива.
+              Сила, която се натрупва като сняг: пласт след пласт, ден след ден.
+              Например с домашно оборудване за тренировки.
+            </p>
+          </div>
+
+          <div class="gift-card">
+            <h2>Разум в кутия</h2>
+            <p>
+              Ума и хладнокръвието тук се изпитват всекидневно — всичко, което
+              един дух трябва да владее. Знам, че със стратегически/кооперативни
+              настолни игри ще се справя.
+            </p>
+          </div>
+
+          <div class="gift-card">
+            <h2>Умни ледени машини</h2>
+            <p>
+              Студът строи армии не от плът, а от метал и светлина. За да върнем
+              леда, ще са нужни машини — умове от код и жица. Трябват ми части
+              за роботика — ESP, сензори, механични елементи.
+            </p>
+          </div>
+        </div>
+        <div style="margin-top: 20px">
+        <button class="btn" data-goto="5">Продължи</button>
+      </div>
+      </div>
+      
+    </section>
+
+    <!-- SCENE 5 -->
+    <section id="scene5" class="scene" aria-hidden="true">
+      <div class="card" role="main" aria-labelledby="s5title">
+        <h1 id="s5title">Готов/а ли си?</h1>
+        <div><button class="btn" data-goto="6">Продължи</button></div>
+      </div>
+    </section>
+
+    <!-- SCENE 6: Countdown -->
+    <section id="scene6" class="scene" aria-hidden="true">
+      <div class="card" role="main" aria-labelledby="s6title">
+        <h1 id="s6title">Старт след:</h1>
+        <p id="countdown" style="font-size: 48px; margin-top: 20px; margin:auto; text-align: center;">3</p>
+      </div>
+    </section>
+
+    <script>
+      /* ---------- CONFIG: background image paths (case-sensitive) ---------- */
+      const BG = {
+        scene1: "img/rila1.png",
+        scene2: "img/rila2.jpg",
+        scene3: "img/echo.png",
+        scene4: "img/frost.png",
+      };
+
+      /* ---------- helper: set CSS variable --bg-url on each scene element ---------- */
+      function setSceneBackgrounds() {
+        Object.keys(BG).forEach((id) => {
+          const el = document.getElementById(id);
+          if (!el) {
+            console.warn("Missing scene element", id);
+            return;
+          }
+          // set --bg-url to a CSS url() value
+          el.style.setProperty("--bg-url", `url("${BG[id]}")`);
+        });
+      }
+
+      /* ---------- debug preloader: verifies images exist & logs ---------- */
+      function preloadAndLog() {
+        Object.values(BG).forEach((src) => {
+          const img = new Image();
+          img.onload = () => console.log("bg loaded", src);
+          img.onerror = () => console.error("bg failed to load (404?):", src);
+          img.src = src;
+        });
+      }
+
+      /* ---------- scene stack logic ---------- */
+      const scenes = ["scene1", "scene2", "scene3", "scene4", "scene5", "scene6"];
+      let currentIndex = 0;
+
+      function showScene(i) {
+        if (i < 0) i = 0;
+        if (i >= scenes.length) i = scenes.length - 1;
+        currentIndex = i;
+        scenes.forEach((id, idx) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (idx === i) {
+            el.classList.add("active");
+            el.setAttribute("aria-hidden", "false");
+          } else {
+            el.classList.remove("active");
+            el.setAttribute("aria-hidden", "true");
+          }
+        });
+        document.getElementById("backBtn").style.display =
+          i === 0 ? "none" : "block";
+        window.scrollTo(0, 0);
+        console.log("Active scene:", scenes[i]);
+      }
+
+      /* ---------- delegation for any element with data-goto ---------- */
+      document.addEventListener("click", (ev) => {
+        const t = ev.target.closest("[data-goto]");
+        if (t) {
+          const goto = Number(t.getAttribute("data-goto"));
+          if (!isNaN(goto)) showScene(goto - 1);
+        }
+      });
+
+      /* ---------- riddle logic ---------- */
+      const accepted = new Set(["echo", "ехо", "ohce", "охе", "охо"]);
+      let attempts = 0;
+      document.getElementById("checkBtn").addEventListener("click", () => {
+        const val = document
+          .getElementById("answer")
+          .value.trim()
+          .toLowerCase();
+        const hint = document.getElementById("hint");
+        attempts++;
+        if (accepted.has(val)) {
+          hint.style.color = "#b6fcd2";
+          hint.textContent = "Правилно.";
+          setTimeout(() => showScene(3), 700);
+          return;
+        }
+        hint.style.color = "#ffb3b3";
+        if (attempts === 1) hint.textContent = "Опитай пак…";
+        else if (attempts === 2)
+          hint.textContent = "Това е звук, който се връща.";
+        else if (attempts === 3)
+          hint.textContent = "Винаги ти отговаря. Освен когато мълчиш.";
+        else if (attempts >= 4)
+          hint.innerHTML =
+            '<div style="text-align:center;">Ако се предаваш:<br><button class="btn ghost" data-goto="4" style="margin-top:6px;">Разкрий пътя</button></div>';
+      });
+
+      /* ---------- music toggle ---------- */
+      const music = document.getElementById("music");
+      const musicToggle = document.getElementById("musicToggle");
+      let musicStarted = false;
+      musicToggle.addEventListener("click", () => {
+        if (!musicStarted) {
+          music.play().catch(() => {}); // blocked sometimes
+          musicStarted = true;
+          musicToggle.textContent = "🔊 Пауза";
+          return;
+        }
+        if (music.paused) {
+          music.play();
+          musicToggle.textContent = "🔊 Пауза";
+        } else {
+          music.pause();
+          musicToggle.textContent = "🔈 Музика";
+        }
+      });
+
+      /* ---------- init ---------- */
+      document.addEventListener("DOMContentLoaded", () => {
+        setSceneBackgrounds();
+        preloadAndLog();
+        // show first scene (safe)
+        showScene(0);
+        /* ----- BACK BUTTON ----- */
+        document.getElementById("backBtn").addEventListener("click", () => {
+          showScene(currentIndex - 1);
+        });
+      });
+
+      /* ----- MUSIC START MODAL ----- */
+      document.getElementById("musicYesBtn").addEventListener("click", () => {
+        const ask = document.getElementById("musicAsk");
+        ask.style.opacity = "0";
+        ask.style.pointerEvents = "none";
+        setTimeout(() => ask.remove(), 400);
+
+        // start music
+        music.play().catch(() => {});
+        musicStarted = true;
+        musicToggle.textContent = "🔊 Пауза";
+      });
+
+      function createSnowflakes(count = 50) {
+        for (let i = 0; i < count; i++) {
+          const flake = document.createElement("div");
+          flake.className = "snowflake";
+          flake.textContent = "❄"; // символ на снежинка
+          flake.style.left = Math.random() * window.innerWidth + "px";
+          flake.style.fontSize = Math.random() * 16 + 8 + "px";
+          flake.style.animationDuration = Math.random() * 5 + 5 + "s";
+          flake.style.opacity = Math.random();
+          document.body.appendChild(flake);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        createSnowflakes(60);
+      });
+
+      // Countdown логика
+      function startCountdown() {
+        let count = 3;
+        const countdownEl = document.getElementById("countdown");
+        const interval = setInterval(() => {
+          count--;
+          if (count > 0) {
+            countdownEl.textContent = count;
+          } else {
+            clearInterval(interval);
+            countdownEl.textContent = "Чао!";
+            // Затваря сайта/пренасочва
+            setTimeout(() => {
+              window.close(); // Работи само ако е отворен чрез JS
+              // Ако не се затвори, може да пренасочи
+              // window.location.href = "about:blank";
+            }, 800);
+          }
+        }, 1000);
+      }
+
+      // Добави listener за сцена6
+      document.addEventListener("click", (ev) => {
+        const t = ev.target.closest("[data-goto]");
+        if (t) {
+          const goto = Number(t.getAttribute("data-goto"));
+          if (!isNaN(goto)) {
+            showScene(goto - 1);
+            if (goto - 1 === scenes.indexOf("scene6")) startCountdown();
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
