@@ -235,7 +235,7 @@
         padding: auto;
       }
 
-      @media (max-width: 720px) {
+      @media (max-width: 1100px) {
         .card {
           padding: 20px;
           margin: 14px;
@@ -264,6 +264,30 @@
 
         #scene4 .card p {
           max-width: 100% !important;
+        }
+        
+        #scene4 {
+          align-items: flex-start !important;
+          padding-top: 70px !important;
+          position: relative;
+          overflow: hidden;
+        }
+
+        #scene4::before {
+          background-size: cover !important;
+          background-position: center center !important;
+          background-repeat: no-repeat !important;
+
+          height: 120% !important; 
+          top: -10vh !important;
+        }
+
+        #scene4 .card {
+          padding: 26px 20px !important;
+        }
+
+        #scene4 .gifts {
+          gap: 22px !important;
         }
       }
 
